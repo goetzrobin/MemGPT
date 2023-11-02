@@ -139,3 +139,6 @@ frontned/.env
 
 frontend/*.key
 frontend/*.key.pub
+
+# PyCharm
+.idea/**

@@ -3,14 +3,14 @@ repos:
     rev: v2.3.0
     hooks:
     -   id: check-yaml
-        exclude: ^(docs/|frontend/)
+        exclude: ^(docs/|frontend/|memgpt_frontend/memgpt/web/static_files/)
     -   id: end-of-file-fixer
-        exclude: ^(docs/|frontend/)
+        exclude: ^(docs/|frontend/|memgpt_frontend/memgpt/web/static_files/)
     -   id: trailing-whitespace
-        exclude: ^(docs/|frontend/)
+        exclude: ^(docs/|frontend/|memgpt_frontend/|memgpt/web/static_files/)
 -   repo: https://github.com/psf/black
     rev: 22.10.0
     hooks:
     -   id: black
-        exclude: ^(docs/|frontend/)
+        exclude: ^(docs/|frontend/|memgpt_frontend/memgpt/web/static_files/)
         args: ['--line-length', '140']
