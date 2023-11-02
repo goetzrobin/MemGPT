@@ -3,32 +3,23 @@ import json
 import sys
 import io
 import logging
-import os
-from prettytable import PrettyTable
 import questionary
-import openai
 
 from llama_index import set_global_service_context
-from llama_index import VectorStoreIndex, SimpleDirectoryReader, ServiceContext
+from llama_index import ServiceContext
 
 from memgpt.interface import CLIInterface as interface  # for printing to terminal
 from memgpt.cli.cli_config import configure
-import memgpt.agent as agent
-import memgpt.system as system
 import memgpt.presets.presets as presets
-import memgpt.constants as constants
-import memgpt.personas.personas as personas
-import memgpt.humans.humans as humans
 import memgpt.utils as utils
+from memgpt.web.server.main import start_uvicorn_fastapi_server
 from memgpt.utils import printd
 from memgpt.persistence_manager import LocalStateManager
 from memgpt.config import MemGPTConfig, AgentConfig
-from memgpt.constants import MEMGPT_DIR
 from memgpt.agent import Agent
 from memgpt.embeddings import embedding_model
 from memgpt.openai_tools import (
     configure_azure_support,
-    check_azure_embeddings,
 )
 
 
@@ -44,6 +35,7 @@ def run(
     model_endpoint_type: str = typer.Option(None, help="Specify the LLM model endpoint type"),
     context_window: int = typer.Option(None, help="The context window of the LLM you are using (e.g. 8k for most Mistral 7B variants)"),
     # other
+    server: bool = typer.Option(False, "--server", help="Start MemGPT as a Web Server"),
     first: bool = typer.Option(False, "--first", help="Use --first to send the first message in the sequence"),
     strip_ui: bool = typer.Option(False, help="Remove all the bells and whistles in CLI output (helpful for testing)"),
     debug: bool = typer.Option(False, "--debug", help="Use --debug to enable debugging output"),
@@ -202,7 +194,10 @@ def run(
     if config.model_endpoint == "azure":
         configure_azure_support()
 
-    run_agent_loop(memgpt_agent, first, no_verify, config)  # TODO: add back no_verify
+    if server is False:
+        run_agent_loop(memgpt_agent, first, no_verify, config)  # TODO: add back no_verify
+     else:
+        start_uvicorn_fastapi_server(memgpt_agent, config)
 
 
 def attach(

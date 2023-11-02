@@ -1,6 +1,3 @@
-import shutil
-import configparser
-import uuid
 import logging
 import glob
 import os
@@ -138,6 +135,7 @@ def legacy_run(
     model: str = typer.Option(constants.DEFAULT_MEMGPT_MODEL, help="Specify the LLM model"),
     first: bool = typer.Option(False, "--first", help="Use --first to send the first message in the sequence"),
     strip_ui: bool = typer.Option(False, "--strip_ui", help="Remove all the bells and whistles in CLI output (helpful for testing)"),
+    server: bool = typer.Option(False, "--server", help="Start MemGPT as a Web Server"),
     debug: bool = typer.Option(False, "--debug", help="Use --debug to enable debugging output"),
     no_verify: bool = typer.Option(False, "--no_verify", help="Bypass message verification"),
     archival_storage_faiss_path: str = typer.Option(
@@ -206,6 +204,7 @@ def main(
     archival_storage_sqldb,
     use_azure_openai,
     strip_ui,
+    server,
 ):
     interface.STRIP_UI = strip_ui
     utils.DEBUG = debug
