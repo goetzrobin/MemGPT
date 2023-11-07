@@ -12,5 +12,4 @@ repos:
     rev: 22.10.0
     hooks:
     -   id: black
-        exclude: ^(docs/|frontend/|memgpt_frontend/memgpt/web/static_files/)
         args: ['--line-length', '140']
