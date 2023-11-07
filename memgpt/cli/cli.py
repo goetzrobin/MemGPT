@@ -3,6 +3,7 @@ import json
 import sys
 import io
 import logging
+import asyncio
 import questionary
 
 from llama_index import set_global_service_context
@@ -197,6 +198,7 @@ def run(
     if server is False:
         run_agent_loop(memgpt_agent, first, no_verify, config)  # TODO: add back no_verify
      else:
+        memgpt_agent.save()
         start_uvicorn_fastapi_server(memgpt_agent, config)
 
 
