@@ -74,21 +74,15 @@ async function createIndex(
   return index;
 }
 
-function condition_to_stop_receiving(data: any) {
-  if (
-    data.type === "command_response" ||
-    data.type === "agent_response_end" ||
-    data.type === "agent_response_error" ||
-    data.type === "server_error"
-  ) {
-    return true;
-  } else {
-    return false;
-  }
+function shouldStopReceiving(data: any) {
+  return data.type === "command_response" ||
+      data.type === "agent_response_end" ||
+      data.type === "agent_response_error" ||
+      data.type === "server_error";
 }
 
-function format_agent_response(response: any) {
-  var message;
+function formatAgentResponse(response: any) {
+  let message;
   if (response.message_type === "internal_monologue") {
     message = `💭 _${response.message}_`;
   } else if (response.message_type === "assistant_message") {
@@ -139,7 +133,7 @@ function createReadableStreamFromWebSocket(
       console.log("Got back data");
       console.log(JSON.stringify(data));
 
-      if (condition_to_stop_receiving(data)) {
+      if (shouldStopReceiving(data)) {
         // Write an error
         if (data.type === "agent_response_error" || data.type === "server_error") {
             writer.write(
@@ -161,7 +155,7 @@ function createReadableStreamFromWebSocket(
       } else {
         // Write the data to the stream
         if (data.type === "agent_response") {
-          const message = format_agent_response(data);
+          const message = formatAgentResponse(data);
           if (message !== null) {
             writer.write(encoder.encode(`data: "${message}\\n"\n\n`));
           }

@@ -111,6 +111,9 @@ frontend/build
 .DS_Store
 *.pem
 
+# frontend libs
+!frontend/**/lib/
+
 # debug
 frontend/npm-debug.log*
 frontend/yarn-debug.log*
