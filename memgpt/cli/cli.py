@@ -83,6 +83,10 @@ def run(
     if no_verify:
         config.no_verify = no_verify
 
+    if server is True:
+        start_uvicorn_fastapi_server(config)
+        return
+
     # determine agent to use, if not provided
     if not yes and not agent:
         agent_files = utils.list_agent_config_files()
@@ -195,11 +199,7 @@ def run(
     if config.model_endpoint == "azure":
         configure_azure_support()
 
-    if server is False:
-        run_agent_loop(memgpt_agent, first, no_verify, config)  # TODO: add back no_verify
-     else:
-        memgpt_agent.save()
-        start_uvicorn_fastapi_server(memgpt_agent, config)
+    run_agent_loop(memgpt_agent, first, no_verify, config)  # TODO: add back no_verify
 
 
 def attach(
