@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Agent } from './agent';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = 'https://model.revelation.health/api';
 
 export const useAgentsQuery = () => useQuery(
   {

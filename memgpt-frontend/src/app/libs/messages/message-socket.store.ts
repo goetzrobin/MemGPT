@@ -9,7 +9,7 @@ export const enum ReadyState {
   CLOSED,
 }
 
-const SOCKET_URL = 'ws://localhost:8000/api/chat';
+const SOCKET_URL = 'wss://model.revelation.health/api/chat';
 
 const setUpWebsocket = (
   onMessageCallback: (message: Message) => void,
