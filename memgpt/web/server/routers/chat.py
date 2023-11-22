@@ -13,14 +13,13 @@ def setup_chat_ws_router():
 
     router = APIRouter()
 
-    interface = SyncWebSocketInterface()
-
     @router.websocket("/chat")
     async def websocket_endpoint(
         websocket: WebSocket,
         agent: Annotated[str, Query()],
     ):
         try:
+            interface = SyncWebSocketInterface()
             interface.register_client(websocket)
             memgpt_agent = load_agent(interface, agent)
 
@@ -29,36 +28,39 @@ def setup_chat_ws_router():
             first_message = True
             skip_next_user_input = True
             internal_message = "User is back. Let's start the conversation..."
-            while True:
-                user_message = system.package_user_message(internal_message if skip_next_user_input else await websocket.receive_text())
+            try:
+                while True:
+                    user_message = system.package_user_message(internal_message if skip_next_user_input else await websocket.receive_text())
 
-                if not skip_next_user_input or first_message:
-                    await websocket.send_text(protocol.server_agent_response_start())
+                    if not skip_next_user_input or first_message:
+                        await websocket.send_text(protocol.server_agent_response_start())
 
-                try:
-                    (
-                        new_messages,
-                        user_message,
-                        skip_next_user_input,
-                    ) = process_agent_step(memgpt_agent, user_message, True, first_message)
+                    try:
+                        (
+                            new_messages,
+                            user_message,
+                            skip_next_user_input,
+                        ) = process_agent_step(memgpt_agent, user_message, True, first_message)
 
-                    if skip_next_user_input:
-                        internal_message = user_message
-                        continue
+                        if skip_next_user_input:
+                            internal_message = user_message
+                            continue
 
-                    await websocket.send_text(protocol.server_agent_response_end())
+                        await websocket.send_text(protocol.server_agent_response_end())
 
-                    if first_message:
-                        first_message = False
-                        internal_message = ""
+                        if first_message:
+                            first_message = False
+                            internal_message = ""
 
-                    memgpt_agent.save()
-                except Exception as e:
-                    print(f"[server] self.run_step failed with:\n{e}")
-                    skip_next_user_input = False
-                    await websocket.send_text(protocol.server_agent_response_error(f"self.run_step failed with: {e}"))
+                        memgpt_agent.save()
+                    except Exception as e:
+                        print(f"[server] self.run_step failed with:\n{e}")
+                        skip_next_user_input = False
+                        await websocket.send_text(protocol.server_agent_response_error(f"self.run_step failed with: {e}"))
+            except Exception as e:
+                interface.unregister_client(websocket)
         except Exception as e:
-            interface.unregister_client(websocket)
+            print(f"[server] socket connection failed:\n{e}")
 
     return router
 
