@@ -3,20 +3,22 @@ from typing import Union, Callable, Optional, List
 import uuid
 import json
 import logging
-from threading import Lock
+import uuid
+from abc import abstractmethod
 from functools import wraps
+from threading import Lock
+from typing import Union, Callable, Optional, List
+
 from fastapi import HTTPException
 
 from memgpt.config import MemGPTConfig
 from memgpt.credentials import MemGPTCredentials
 from memgpt.constants import JSON_LOADS_STRICT, JSON_ENSURE_ASCII
+from memgpt.interface import AgentInterface  # abstract
 from memgpt.agent import Agent
 import memgpt.system as system
 import memgpt.constants as constants
 from memgpt.cli.cli import attach
-
-# from memgpt.agent_store.storage import StorageConnector
-from memgpt.metadata import MetadataStore, save_agent
 import memgpt.presets.presets as presets
 import memgpt.utils as utils
 import memgpt.server.utils as server_utils
@@ -30,7 +32,7 @@ from memgpt.data_types import (
 
 # TODO use custom interface
 from memgpt.interface import CLIInterface  # for printing to terminal
-from memgpt.interface import AgentInterface  # abstract
+from memgpt.metadata import MetadataStore, save_agent
 
 logger = logging.getLogger(__name__)
 
@@ -142,6 +144,10 @@ class LockingServer(Server):
 
 
 # TODO actually use "user_id" for something
+def recursively_map_to_json(record: dict) -> dict:
+    return json.loads(json.dumps(record, default=lambda o: getattr(o, "__dict__", str(o))))
+
+
 class SyncServer(LockingServer):
     """Simple single-threaded / blocking server process"""
 
@@ -665,7 +671,7 @@ class SyncServer(LockingServer):
         memgpt_agent = self._get_or_load_agent(user_id=user_id, agent_id=agent_id)
         return [m.id for m in memgpt_agent._messages]
 
-    def get_agent_messages(self, user_id: uuid.UUID, agent_id: uuid.UUID, start: int, count: int) -> list:
+    def get_agent_messages(self, user_id: uuid.UUID, agent_id: uuid.UUID, start: int, count: int) -> list[dict]:
         """Paginated query of all messages in agent message queue"""
         if self.ms.get_user(user_id=user_id) is None:
             raise ValueError(f"User user_id={user_id} does not exist")
@@ -678,33 +684,18 @@ class SyncServer(LockingServer):
         if start < 0 or count < 0:
             raise ValueError("Start and count values should be non-negative")
 
-        if start + count < len(memgpt_agent._messages):  # messages can be returned from whats in memory
-            # Reverse the list to make it in reverse chronological order
-            reversed_messages = memgpt_agent._messages[::-1]
-            # Check if start is within the range of the list
-            if start >= len(reversed_messages):
-                raise IndexError("Start index is out of range")
+        # need to access persistence manager for additional messages
+        db_iterator = memgpt_agent.persistence_manager.recall_memory.storage.get_all_paginated(page_size=count, offset=start)
 
-            # Calculate the end index, ensuring it does not exceed the list length
-            end_index = min(start + count, len(reversed_messages))
+        # get a single page of messages
+        # TODO: handle stop iteration
+        page = next(db_iterator, [])
 
-            # Slice the list for pagination
-            messages = reversed_messages[start:end_index]
-
-        else:
-            # need to access persistence manager for additional messages
-            db_iterator = memgpt_agent.persistence_manager.recall_memory.storage.get_all_paginated(page_size=count, offset=start)
-
-            # get a single page of messages
-            # TODO: handle stop iteration
-            page = next(db_iterator, [])
-
-            # return messages in reverse chronological order
-            messages = sorted(page, key=lambda x: x.created_at, reverse=True)
+        # return messages in reverse chronological order
+        messages = sorted(page, key=lambda x: x.created_at, reverse=True)
 
         # convert to json
-        json_messages = [vars(record) for record in messages]
-        return json_messages
+        return [recursively_map_to_json(record) for record in messages]
 
     def get_agent_archival(self, user_id: uuid.UUID, agent_id: uuid.UUID, start: int, count: int) -> list:
         """Paginated query of all messages in agent archival memory"""
@@ -721,7 +712,7 @@ class SyncServer(LockingServer):
 
         # get a single page of messages
         page = next(db_iterator, [])
-        json_passages = [vars(record) for record in page]
+        json_passages = [recursively_map_to_json(record) for record in page]
         return json_passages
 
     def get_agent_archival_cursor(
@@ -746,7 +737,7 @@ class SyncServer(LockingServer):
         cursor, records = memgpt_agent.persistence_manager.archival_memory.storage.get_all_cursor(
             after=after, before=before, limit=limit, order_by=order_by, reverse=reverse
         )
-        json_records = [vars(record) for record in records]
+        json_records = [recursively_map_to_json(record) for record in records]
         return cursor, json_records
 
     def get_agent_recall_cursor(
@@ -771,7 +762,7 @@ class SyncServer(LockingServer):
         cursor, records = memgpt_agent.persistence_manager.recall_memory.storage.get_all_cursor(
             after=after, before=before, limit=limit, order_by=order_by, reverse=reverse
         )
-        json_records = [vars(record) for record in records]
+        json_records = [recursively_map_to_json(record) for record in records]
 
         # TODO: mark what is in-context versus not
         return cursor, json_records

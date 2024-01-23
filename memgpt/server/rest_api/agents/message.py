@@ -1,9 +1,9 @@
 import asyncio
-from asyncio import AbstractEventLoop
-from enum import Enum
 import json
 import uuid
-from typing import List
+from asyncio import AbstractEventLoop
+from enum import Enum
+from typing import List, Optional
 
 from fastapi import APIRouter, Body, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -66,6 +66,25 @@ def setup_agents_message_router(server: SyncServer, interface: QueuingInterface)
 
         interface.clear()
         messages = server.get_agent_messages(user_id=user_id, agent_id=agent_id, start=request.start, count=request.count)
+        return GetAgentMessagesResponse(messages=messages)
+
+    @router.get("/agents/messages", tags=["agents"], response_model=GetAgentMessagesResponse)
+    def get_agent_messages(
+        user_id: str = Query(..., description="The unique identifier of the user."),
+        agent_id: str = Query(..., description="The unique identifier of the agent."),
+        before: Optional[str] = Query(default=None, description="Id of message after which to search for"),
+        limit: Optional[int] = Query(10, description="Limit response to this amount of results"),
+    ):
+        """
+        Retrieve the messages of a specific agent. Paginated, provide id of message after which to search
+         and limit to iterate.
+        """
+        user_id = uuid.UUID(user_id) if user_id else None
+        agent_id = uuid.UUID(agent_id) if agent_id else None
+        before_id = uuid.UUID(before) if before else None
+
+        interface.clear()
+        last_id, messages = server.get_agent_recall_cursor(user_id=user_id, agent_id=agent_id, before=before_id, limit=limit, reverse=True)
         return GetAgentMessagesResponse(messages=messages)
 
     @router.post("/agents/message", tags=["agents"], response_model=UserMessageResponse)

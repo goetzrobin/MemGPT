@@ -19,14 +19,12 @@ export const pickMessageElement = ({ type, message_type, message, date }: Messag
 		(type === 'agent_response' && message_type === 'function_return' && message !== 'None')
 	) {
 		return (
-			<p
+			<pre
 				key={key}
-				className={cnInlineCode(
-					'mb-2 w-fit max-w-xl overflow-x-scroll whitespace-nowrap rounded border bg-black p-2 text-xs text-white'
-				)}
+				className={cnInlineCode('mb-2 w-fit max-w-xl overflow-x-scroll rounded border bg-black p-2 text-xs text-white')}
 			>
 				{message}
-			</p>
+			</pre>
 		);
 	}
 	if (type === 'agent_response' && message_type === 'internal_monologue') {

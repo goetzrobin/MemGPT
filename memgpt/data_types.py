@@ -1,13 +1,10 @@
 """ This module contains the data types used by MemGPT. Each data type must include a function to create a DB model. """
 import uuid
 from datetime import datetime
-from abc import abstractmethod
 from typing import Optional, List, Dict, TypeVar
 import numpy as np
 
-from memgpt.constants import DEFAULT_HUMAN, DEFAULT_MEMGPT_MODEL, DEFAULT_PERSONA, DEFAULT_PRESET, LLM_MAX_TOKENS, MAX_EMBEDDING_DIM
-from memgpt.utils import get_local_time, format_datetime, get_utc_time
-from memgpt.models import chat_completion_response
+from memgpt.constants import LLM_MAX_TOKENS, MAX_EMBEDDING_DIM
 
 
 class Record:

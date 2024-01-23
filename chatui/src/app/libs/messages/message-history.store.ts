@@ -35,6 +35,7 @@ const useMessageHistoryStore = create(
 );
 
 export const useMessageHistory = () => useMessageHistoryStore((s) => s.history);
-export const useMessagesForKey = (key: string) => useMessageHistoryStore((s) => s.history[key] ?? []);
+export const useMessagesForKey = (key: string | null | undefined) =>
+	useMessageHistoryStore((s) => (key ? s.history[key] ?? [] : []));
 
 export const useMessageHistoryActions = () => useMessageHistoryStore((s) => s.actions);

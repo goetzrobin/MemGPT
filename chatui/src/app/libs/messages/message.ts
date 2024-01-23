@@ -1,6 +1,7 @@
 import * as z from 'zod';
 
 export const MessageSchema = z.object({
+	id: z.string(),
 	type: z.enum(['user_message', 'agent_response', 'system_message']),
 	message_type: z
 		.enum([
