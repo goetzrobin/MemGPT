@@ -2,9 +2,8 @@ import builtins
 import os
 import shutil
 import uuid
-from typing import Annotated, Tuple, Optional
 from enum import Enum
-from typing import Annotated
+from typing import Annotated, Optional
 
 import questionary
 import typer
@@ -17,12 +16,9 @@ from memgpt.config import MemGPTConfig
 from memgpt.constants import LLM_MAX_TOKENS
 from memgpt.constants import MEMGPT_DIR
 from memgpt.credentials import MemGPTCredentials, SUPPORTED_AUTH_TYPES
-from memgpt.data_types import User, LLMConfig, EmbeddingConfig
-from memgpt.llm_api_tools import openai_get_model_list, azure_openai_get_model_list, smart_urljoin
 from memgpt.local_llm.constants import DEFAULT_ENDPOINTS, DEFAULT_OLLAMA_MODEL, DEFAULT_WRAPPER_NAME
 from memgpt.local_llm.utils import get_available_wrappers
 from memgpt.llm_api_tools import openai_get_model_list, azure_openai_get_model_list, smart_urljoin
-from memgpt.server.utils import shorten_key_middle
 from memgpt.data_types import User, LLMConfig, EmbeddingConfig, Source
 from memgpt.metadata import MetadataStore
 from memgpt.server.utils import shorten_key_middle
